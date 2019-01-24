@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:sharding="http://shardingjdbc.io/schema/shardingjdbc/sharding"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/aop 
+          				http://www.springframework.org/schema/aop/spring-aop.xsd
+          				http://www.springframework.org/schema/tx 
+          				http://www.springframework.org/schema/tx/spring-tx.xsd
+          				http://www.springframework.org/schema/context 
+          				http://www.springframework.org/schema/context/spring-context.xsd
+                        http://shardingjdbc.io/schema/shardingjdbc/sharding
+                        http://shardingjdbc.io/schema/shardingjdbc/sharding/sharding.xsd">
+	<!--分库策略 -->
+	<sharding:standard-strategy id="databaseStrategy"
+		sharding-column="user_id"
+		precise-algorithm-class="site.ilemon.sharding.algorithm.UserDatabaseShardingStrategy" />
+	<!--user表分表策略 -->
+	<sharding:standard-strategy id="tableStrategy"
+		sharding-column="user_id"
+		precise-algorithm-class="site.ilemon.sharding.algorithm.UserTableShardingStrategy" />
+
+	<sharding:data-source id="shardingDataSource">
+		<sharding:sharding-rule data-source-names="dataSource_0,dataSource_1"
+			default-database-strategy-ref="databaseStrategy"
+			default-table-strategy-ref="tableStrategy">
+			<sharding:table-rules>
+				<sharding:table-rule logic-table="t_user"
+					actual-data-nodes="dataSource_${0..1}.t_user_${0..1}"
+					database-strategy-ref="databaseStrategy" />
+			</sharding:table-rules>
+		</sharding:sharding-rule>
+		<sharding:props>
+			<prop key="sql.show">true</prop>
+			<prop key="executor.size">2</prop>
+		</sharding:props>
+	</sharding:data-source>
+</beans>
